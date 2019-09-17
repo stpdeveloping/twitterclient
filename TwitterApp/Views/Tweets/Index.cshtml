@@ -1,0 +1,88 @@
+﻿@using TwitterApp.Extensions
+@model TwitterApp.Models.Home
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="content-wrap">
+    <section role="main" id="content">        
+        <div class="tweet-search">
+            <h3>Search for updates:</h3>
+            @using (Html.BeginForm("GetTweetsBySearchQuery", "Tweets", FormMethod.Post, new { id = "search-form" }))
+            {
+                @Html.ValidationMessageFor(model => model.SearchInput) 
+                @Html.EditorFor(model => model.SearchInput, new { htmlAttributes = new { @id = "search-text", @placeholder = "search phrase..." } })               
+                <input type="submit" id="search-button" value="Search" style="margin-right: 10px" />
+            }
+        </div>
+        @if (!Model.FirstLoad)
+        {
+    <div class="tweet-search-results">
+        @if (string.IsNullOrEmpty(Model.ErrorMessage) && Model.Tweets.Any())
+        {
+            <div class="results-container">
+                <h3>Search results:</h3>
+                <div class="twitter-feed">
+                    @foreach (var tweet in Model.Tweets)
+                    {
+                        <div class="tweet">
+                            <p>@Html.Raw(tweet.text.WithProperFormatting())</p>
+                            <p class="tweet-datetime">@($"Posted by {tweet.user.name} on {tweet.created_at.ToPossibleDateFormat()}")</p>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="pagination">
+                @using (Html.BeginForm("ChangePage", "Home", FormMethod.Post, new { id="pages" })) {
+                    @Html.Raw(Model.NumberOfSearchResults == 10 ? "" : "<a class='previous' href='#' title='previous page'><span class='reader'>Previous page of results</span></a>")
+                    @Html.Raw(Model.NumberOfSearchResults >= Model.NumberOfSearchTweets ? "" : "<a class='next' href='#' title='next page'><span class='reader'>Next page of results</span></a>")                
+                    @Html.Hidden("isNext")
+                }
+            </div>            
+        }
+        else
+        {
+            <p>@Model.ErrorMessage</p>
+        }
+    </div>        
+        }
+    </section>
+    <aside role="complementary" id="sidebar">
+        <h3 class="tweet-heading">POSSIBLE</h3>
+        <p class="tweet-intro">Our most recent updates:</p>
+        @if (Model.PossibleTweets.Any())
+        {
+            <div class="twitter-feed">
+                @foreach (var tweet in Model.PossibleTweets)
+                {
+                    <div class="tweet">
+                        <p>@Html.Raw(tweet.text.WithProperFormatting())</p>
+                        <p class="tweet-datetime">@($"Posted on {tweet.created_at.ToPossibleDateFormat()}")</p>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p>@Model.ErrorMessage2</p>
+        }
+    </aside>
+</div>
+
+<script type="text/javascript">
+    var nextButton = document.querySelector(".next");
+    if (nextButton != null)
+        nextButton.addEventListener("click",
+            () => {
+                document.querySelector("#isNext").value = true;
+                document.querySelector("#pages").submit();
+            }, false);
+    var previousButton = document.querySelector(".previous");
+    if (previousButton != null)
+        previousButton.addEventListener("click",
+            () => {
+                document.querySelector("#isNext").value = false;
+                document.querySelector("#pages").submit();
+            }, false);
+</script>
